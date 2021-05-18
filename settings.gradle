@@ -1,0 +1,2 @@
+rootProject.name = "ParseChatMVVM"
+include ':app'
