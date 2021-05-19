@@ -1,6 +1,12 @@
 package com.ahmettekin.parsechatmvvm.view.activity
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.ahmettekin.parsechatmvvm.R
@@ -11,7 +17,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startService(Intent(applicationContext, MessageService::class.java))
     }
 
     override fun onPause() {
@@ -23,11 +28,5 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isApplicationPaused = false
     }
-
-    /**
-     * eğer kullanıcı odada varsa odaya katıl tıklanılmamalı
-     * bildirime tıklanılınca direk mesaja gitmeli
-     * bütün mesajlar ve odalar local db ye kaydedilmeli(bu olay internetteki veri isteğinde hata kontrolünde yapılabilir)
-     */
 
 }

@@ -1,16 +1,14 @@
 package com.ahmettekin.parsechatmvvm.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.databinding.RowChatroomsLayoutBinding
-import com.ahmettekin.parsechatmvvm.model.Room
-import java.lang.reflect.Array
+import com.ahmettekin.parsechatmvvm.model.ChatRoom
 
-class RoomsAdapter(private val roomList: ArrayList<Room>, private val mListener : RoomClickListener): RecyclerView.Adapter<RoomsAdapter.RoomViewHolder>(){
+class RoomsAdapter(private val chatRoomList: ArrayList<ChatRoom>, private val mListener : RoomClickListener): RecyclerView.Adapter<RoomsAdapter.RoomViewHolder>(){
     private lateinit var binding: RowChatroomsLayoutBinding
 
     class RoomViewHolder(var mBinding: RowChatroomsLayoutBinding) : RecyclerView.ViewHolder(mBinding.root)
@@ -22,15 +20,15 @@ class RoomsAdapter(private val roomList: ArrayList<Room>, private val mListener 
     }
 
     override fun onBindViewHolder(holder: RoomViewHolder, position: Int) {
-        holder.mBinding.room = roomList[position]
+        holder.mBinding.room = chatRoomList[position]
         holder.mBinding.listener = mListener
     }
 
-    override fun getItemCount()= roomList.size
+    override fun getItemCount()= chatRoomList.size
 
-    fun updateRoomList(newRoomList: List<Room>) {
-        roomList.clear()
-        roomList.addAll(newRoomList)
+    fun updateRoomList(newChatRoomList: List<ChatRoom>) {
+        chatRoomList.clear()
+        chatRoomList.addAll(newChatRoomList)
         notifyDataSetChanged()
     }
 

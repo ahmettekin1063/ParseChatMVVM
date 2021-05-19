@@ -1,5 +1,6 @@
 package com.ahmettekin.parsechatmvvm.view.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.databinding.DataBindingUtil
@@ -11,8 +12,8 @@ import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.adapter.RoomClickListener
 import com.ahmettekin.parsechatmvvm.adapter.RoomsAdapter
 import com.ahmettekin.parsechatmvvm.databinding.FragmentRoomsBinding
+import com.ahmettekin.parsechatmvvm.service.MessageService
 import com.ahmettekin.parsechatmvvm.viewmodel.RoomsViewModel
-import com.parse.ParseUser
 
 class RoomsFragment : Fragment() , RoomClickListener{
     private lateinit var viewModel: RoomsViewModel
@@ -35,7 +36,9 @@ class RoomsFragment : Fragment() , RoomClickListener{
             adapter = roomsAdapter
             layoutManager = LinearLayoutManager(context)
         }
-        viewModel.getRooms()
+        viewModel.getRoomsFromBack4App()
+        viewModel.connectionControl(viewLifecycleOwner)
+        context?.startService(Intent(context, MessageService::class.java))
         observeLiveData()
     }
 
@@ -43,6 +46,15 @@ class RoomsFragment : Fragment() , RoomClickListener{
         viewModel.roomList.observe(viewLifecycleOwner,{ roomList->
             roomList?.let{
                 roomsAdapter.updateRoomList(it)
+            }
+        })
+        viewModel.isConnected.observe(viewLifecycleOwner,{ isConnected->
+            isConnected?.let {
+                if(it){
+                    viewModel.getRoomsFromBack4App()
+                }else{
+                    viewModel.getRoomsFromSQLite()
+                }
             }
         })
     }
@@ -66,8 +78,8 @@ class RoomsFragment : Fragment() , RoomClickListener{
         childFragmentManager.let { AddRoomDialogFragment().show(it,"ADD_ROOM") }
     }
 
-    override fun onRoomClicked(currentRoomObjectId: String, currentRoomUserIdList: List<String>) {
-        val action = RoomsFragmentDirections.actionRoomsFragmentToChattingFragment(currentRoomObjectId, currentRoomUserIdList?.toTypedArray())
+    override fun onRoomClicked(currentRoomObjectId: String, currentRoomUserIdList: String) {
+        val action = RoomsFragmentDirections.actionRoomsFragmentToChattingFragment(currentRoomObjectId, currentRoomUserIdList)
         Navigation.findNavController(mView).navigate(action)
     }
 

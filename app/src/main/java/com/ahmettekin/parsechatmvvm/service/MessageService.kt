@@ -10,15 +10,29 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.ahmettekin.parsechatmvvm.R
+import com.ahmettekin.parsechatmvvm.database.MessagesDatabase
 import com.ahmettekin.parsechatmvvm.isApplicationPaused
+import com.ahmettekin.parsechatmvvm.model.Message
 import com.ahmettekin.parsechatmvvm.view.activity.MainActivity
 import com.parse.ParseObject
 import com.parse.ParseQuery
 import com.parse.ParseUser
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
-class MessageService : Service() {
+class MessageService : Service(), CoroutineScope {
+
+    private val job = Job()
+
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
 
     override fun onCreate() {
         observeMessage()
@@ -29,6 +43,7 @@ class MessageService : Service() {
         query.orderByAscending("createdAt")
         query.findInBackground { messages, e ->
             if (e == null) {
+                saveMessagesInSQLite(messages)
                 handleMessage()
             } else {
                 Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
@@ -48,13 +63,15 @@ class MessageService : Service() {
             handler.post {
                 query?.findInBackground { messages, e ->
                     if (e == null) {
+
                         println(ParseUser.getCurrentUser().objectId)
                         println(messages.last().getString("userId"))
-                        if(!isMyMessage(messages.last().getString("userId"))){
+                        if (!isMyMessage(messages.last().getString("userId"))) {
                             sendNotification(messages.last().getString("body"))
                         }
                     } else {
-                        Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT)
+                            .show()
                     }
                 }
             }
@@ -63,23 +80,27 @@ class MessageService : Service() {
 
     private fun sendNotification(message: String?) {
         message?.let {
-            val mMessage = if(isApplicationPaused){
+            val mMessage = if (isApplicationPaused) {
                 message
-            }else{
+            } else {
                 ""
             }
             val builder: NotificationCompat.Builder
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val intent = Intent(this, MainActivity::class.java)
-            val pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            val pendingIntent =
+                PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channelId = "kanalId"
                 val channelName = "kanalAd"
                 val channelDescription = "kanalTanıtım"
                 val channelImportance = NotificationManager.IMPORTANCE_HIGH
-                var notificationChannel: NotificationChannel? = notificationManager.getNotificationChannel(channelId)
+                var notificationChannel: NotificationChannel? =
+                    notificationManager.getNotificationChannel(channelId)
                 if (notificationChannel == null) {
-                    notificationChannel = NotificationChannel(channelId, channelName, channelImportance)
+                    notificationChannel =
+                        NotificationChannel(channelId, channelName, channelImportance)
                     notificationChannel.description = channelDescription
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -103,7 +124,7 @@ class MessageService : Service() {
         }
     }
 
-    private fun isMyMessage(messageUserId: String?):Boolean{
+    private fun isMyMessage(messageUserId: String?): Boolean {
         return ParseUser.getCurrentUser().objectId == messageUserId
     }
 
@@ -111,4 +132,24 @@ class MessageService : Service() {
         return null
     }
 
+    private fun saveMessagesInSQLite(list: MutableList<ParseObject>) {
+        launch {
+            val dao = MessagesDatabase(getApplication()).messagesDao()
+            runBlocking {
+                dao.deleteAllMessages()
+            }
+            val messages = arrayListOf<Message>()
+            for (tempMessage in list) {
+                val message = Message(
+                    tempMessage.objectId,
+                    tempMessage.getString("userId"),
+                    tempMessage.getString("body")
+                )
+                messages.add(message)
+            }
+            dao.insertAll(*messages.toTypedArray())
+            println("saved messages in sqlite")
+        }
+    }
 }
+

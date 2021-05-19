@@ -5,7 +5,7 @@
     <data>
         <variable
             name="room"
-            type="com.ahmettekin.parsechatmvvm.model.Room" />
+            type="com.ahmettekin.parsechatmvvm.model.ChatRoom" />
         <variable
             name="listener"
             type="com.ahmettekin.parsechatmvvm.adapter.RoomClickListener" />

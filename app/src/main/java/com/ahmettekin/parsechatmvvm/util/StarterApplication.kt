@@ -1,4 +1,4 @@
-package com.ahmettekin.parsechatmvvm
+package com.ahmettekin.parsechatmvvm.util
 
 import android.app.Application
 import android.content.Intent

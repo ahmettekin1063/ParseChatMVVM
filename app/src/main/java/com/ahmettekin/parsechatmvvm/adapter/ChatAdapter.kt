@@ -9,7 +9,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.model.Message
-import com.ahmettekin.parsechatmvvm.model.Room
 import com.bumptech.glide.Glide
 import java.math.BigInteger
 import java.security.MessageDigest

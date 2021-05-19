@@ -1,24 +1,36 @@
 package com.ahmettekin.parsechatmvvm.viewmodel
 
 import android.app.Application
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
-import android.view.View
 import android.widget.Toast
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
+import androidx.room.Room
+import com.ahmettekin.parsechatmvvm.database.ChatRoomsDatabase
+import com.ahmettekin.parsechatmvvm.database.MessagesDatabase
+import com.ahmettekin.parsechatmvvm.model.ChatRoom
 import com.ahmettekin.parsechatmvvm.model.Message
-import com.ahmettekin.parsechatmvvm.service.MessageService
+import com.ahmettekin.parsechatmvvm.util.NetworkConnectionLiveData
 import com.parse.ParseObject
 import com.parse.ParseQuery
 import com.parse.ParseUser
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class ChattingViewModel(application: Application) : BaseViewModel(application) {
     val messageList = MutableLiveData<List<Message>>()
     val isJoined = MutableLiveData<Boolean>()
+    val isConnected = MutableLiveData<Boolean>()
+
+    fun connectionControl(viewLifecycleOwner: LifecycleOwner) {
+        NetworkConnectionLiveData(getApplication())
+            .observe(viewLifecycleOwner,{ isOnline ->
+                isConnected.value = isOnline
+            })
+    }
 
     fun sendMessage(sentMessage: String, currentRoomObjectId: String) {
         launch {
@@ -40,19 +52,21 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
         launch {
             val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
             query.getInBackground(currentRoomObjectId) { room, e ->
-                room.add("messageIdList", messageId)
+                var tempMessageIds = room.getString("messageIdList")
+                tempMessageIds = "$tempMessageIds,$messageId"
+                room.put("messageIdList", tempMessageIds)
                 room.saveInBackground()
             }
         }
     }
 
-    fun setupMessages(currentRoomObjectId: String) {
+    fun setupMessagesFromB4a(currentRoomObjectId: String) {
         launch {
             val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
             query.orderByAscending("createdAt")
             query.findInBackground { messages, e ->
                 if (e == null) {
-                    getMessagesInCurrentRoom(messages, currentRoomObjectId)
+                    getMessagesInCurrentRoomFromB4a(messages, currentRoomObjectId)
                 } else {
                     Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
@@ -61,14 +75,14 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    private fun getMessagesInCurrentRoom(messages: MutableList<ParseObject>, currentRoomObjectId: String) {
+    private fun getMessagesInCurrentRoomFromB4a(messages: MutableList<ParseObject>, currentRoomObjectId: String) {
         launch {
             val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
             query.getInBackground(currentRoomObjectId) { room, e ->
                 val mMessages = arrayListOf<Message>()
                 for (tempMessage in messages) {
-                    if (room.getList<String>("messageIdList")?.contains(tempMessage.objectId) == true) {
-                        val message = Message(tempMessage.getString("userId"), tempMessage.getString("body"))
+                    if (room.getString("messageIdList")?.contains(tempMessage.objectId) == true) {
+                        val message = Message(tempMessage.objectId,tempMessage.getString("userId"), tempMessage.getString("body"))
                         mMessages.add(message)
                     }
                 }
@@ -88,7 +102,7 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                 handler.post {
                     query?.findInBackground { messages, e ->
                         if (e == null) {
-                            getMessagesInCurrentRoom(messages, currentRoomObjectId)
+                            getMessagesInCurrentRoomFromB4a(messages, currentRoomObjectId)
                         } else {
                             Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                         }
@@ -103,10 +117,8 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
             val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
             query.getInBackground(currentRoomObjectId) { room, e ->
                 if (e == null) {
-                    val userIdList = room.getList<String>("userIdList")
-                    userIdList as ArrayList<String>?
-                    isJoined.value =
-                        userIdList?.contains(ParseUser.getCurrentUser().objectId) != false
+                    val userIdList = room.getString("userIdList")
+                    isJoined.value = userIdList?.contains(ParseUser.getCurrentUser().objectId) != false
                 } else {
                     Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
@@ -119,7 +131,9 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
             val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
             query.getInBackground(currentRoomObjectId) { room, e ->
                 if (e == null) {
-                    room.add("userIdList", ParseUser.getCurrentUser().objectId)
+                    var userIdList = room.getString("userIdList")
+                    userIdList = "$userIdList,${ParseUser.getCurrentUser().objectId}"
+                    room.put("userIdList", userIdList)
                     room.saveInBackground {
                         if (it == null) {
                             println("success")
@@ -134,4 +148,22 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
             }
         }
     }
+
+    fun getMessagesFromSQLite(currentRoomObjectId: String) {
+        launch {
+            val messagesDao = MessagesDatabase(getApplication()).messagesDao()
+            val messages = messagesDao.getAllMessages()
+            println("get messages from sqlite")
+            val roomsDao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
+            val room = roomsDao.getChatroom(currentRoomObjectId)
+            val mMessages = arrayListOf<Message>()
+            for (tempMessage in messages) {
+                if (room.messageIdList?.contains(tempMessage.objectId) == true) {
+                    mMessages.add(tempMessage)
+                }
+            }
+            messageList.value = mMessages
+        }
+    }
+
 }

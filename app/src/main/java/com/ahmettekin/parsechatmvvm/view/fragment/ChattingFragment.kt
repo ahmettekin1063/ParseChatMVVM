@@ -1,7 +1,6 @@
 package com.ahmettekin.parsechatmvvm.view.fragment
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -11,13 +10,9 @@ import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.adapter.ChatAdapter
-import com.ahmettekin.parsechatmvvm.databinding.FragmentAddRoomBinding
 import com.ahmettekin.parsechatmvvm.databinding.FragmentChattingBinding
 import com.ahmettekin.parsechatmvvm.model.Message
-import com.ahmettekin.parsechatmvvm.service.MessageService
 import com.ahmettekin.parsechatmvvm.viewmodel.ChattingViewModel
-import com.parse.ParseObject
-import com.parse.ParseQuery
 import com.parse.ParseUser
 
 class ChattingFragment : Fragment() {
@@ -27,7 +22,7 @@ class ChattingFragment : Fragment() {
     private lateinit var mMessages: ArrayList<Message>
     private lateinit var mView: View
     private var currentRoomObjectId = ""
-    private var currentRoomUserIdList = arrayOf<String>()
+    private var currentRoomUserIdList = ""
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         dataBinding = DataBindingUtil.inflate(inflater,R.layout.fragment_chatting,container,false)
@@ -51,7 +46,10 @@ class ChattingFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
         }
         dataBinding.fragment = this
-        viewModel.setupMessages(currentRoomObjectId)
+
+        viewModel.setupMessagesFromB4a(currentRoomObjectId)
+        viewModel.connectionControl(viewLifecycleOwner)
+
         observeLiveData()
     }
 
@@ -76,7 +74,6 @@ class ChattingFragment : Fragment() {
         }
     }
 
-
     private fun observeLiveData() {
         viewModel.messageList.observe(viewLifecycleOwner,{ messages ->
             messages?.let{
@@ -95,6 +92,16 @@ class ChattingFragment : Fragment() {
                 }else{
                     dataBinding.btnSend.visibility = View.GONE
                     dataBinding.etMessage.visibility = View.GONE
+                }
+            }
+        })
+
+        viewModel.isConnected.observe(viewLifecycleOwner,{ isConnected->
+            isConnected?.let {
+                if(it){
+                    viewModel.setupMessagesFromB4a(currentRoomObjectId)
+                }else{
+                    viewModel.getMessagesFromSQLite(currentRoomObjectId)
                 }
             }
         })

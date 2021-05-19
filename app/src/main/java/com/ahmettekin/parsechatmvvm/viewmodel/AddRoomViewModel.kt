@@ -16,11 +16,9 @@ class AddRoomViewModel(application: Application) : BaseViewModel(application) {
             roomName?.let {
                 val room = ParseObject("Rooms")
                 room.put("name", it)
-                room.put("messageIdList", ArrayList<String>())
+                room.put("messageIdList", "")
                 room.put("adminUserId", ParseUser.getCurrentUser().objectId)
-                val userIdList = ArrayList<String>()
-                userIdList.add(ParseUser.getCurrentUser().objectId)
-                room.put("userIdList", userIdList)
+                room.put("userIdList", ParseUser.getCurrentUser().objectId)
                 room.saveInBackground { error ->
                     if (error != null) {
                         println(error.localizedMessage)
