@@ -19,6 +19,7 @@ import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class ChattingViewModel(application: Application) : BaseViewModel(application) {
     val messageList = MutableLiveData<List<Message>>()
@@ -86,7 +87,9 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                         mMessages.add(message)
                     }
                 }
-                messageList.value = mMessages
+                runBlocking {
+                    messageList.value = mMessages
+                }
             }
         }
     }

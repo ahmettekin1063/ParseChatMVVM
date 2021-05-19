@@ -39,39 +39,50 @@ class MessageService : Service(), CoroutineScope {
     }
 
     private fun observeMessage() {
-        val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-        query.orderByAscending("createdAt")
-        query.findInBackground { messages, e ->
-            if (e == null) {
-                saveMessagesInSQLite(messages)
-                handleMessage()
-            } else {
-                Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
+        launch {
+            val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
+            query.orderByAscending("createdAt")
+            query.findInBackground { messages, e ->
+                if (e == null) {
+                    saveMessagesInSQLite(messages)
+                    handleMessage()
+                } else {
+                    Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
         }
 
     }
 
     private fun handleMessage() {
-        val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
-        val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-        parseQuery.orderByAscending("createdAt")
-        val subscriptionHandling: SubscriptionHandling<ParseObject> =
-            parseLiveQueryClient.subscribe(parseQuery)
-        subscriptionHandling.handleEvents { query, _, _ ->
-            val handler = Handler(Looper.getMainLooper())
-            handler.post {
-                query?.findInBackground { messages, e ->
-                    if (e == null) {
-
-                        println(ParseUser.getCurrentUser().objectId)
-                        println(messages.last().getString("userId"))
-                        if (!isMyMessage(messages.last().getString("userId"))) {
-                            sendNotification(messages.last().getString("body"))
+        launch {
+            val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
+            val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
+            parseQuery.orderByAscending("createdAt")
+            val subscriptionHandling: SubscriptionHandling<ParseObject> =
+                parseLiveQueryClient.subscribe(parseQuery)
+            subscriptionHandling.handleEvents { query, _, _ ->
+                val handler = Handler(Looper.getMainLooper())
+                handler.post {
+                    query?.findInBackground { messages, e ->
+                        if (e == null) {
+                            saveMessagesInSQLite(messages)
+                            println(ParseUser.getCurrentUser().objectId)
+                            println(messages.last().getString("userId"))
+                            if (!isMyMessage(messages.last().getString("userId"))) {
+                                runBlocking {
+                                    sendNotification(messages.last().getString("body"))
+                                }
+                            }
+                        } else {
+                            Toast.makeText(
+                                applicationContext,
+                                e.localizedMessage,
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
                         }
-                    } else {
-                        Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT)
-                            .show()
                     }
                 }
             }
