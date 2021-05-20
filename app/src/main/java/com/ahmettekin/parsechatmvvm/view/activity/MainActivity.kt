@@ -14,6 +14,7 @@ import com.ahmettekin.parsechatmvvm.isApplicationPaused
 import com.ahmettekin.parsechatmvvm.service.MessageService
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

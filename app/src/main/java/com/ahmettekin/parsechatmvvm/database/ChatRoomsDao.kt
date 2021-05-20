@@ -9,7 +9,7 @@ import com.ahmettekin.parsechatmvvm.model.ChatRoom
 @Dao
 interface ChatRoomsDao {
 
-    @Insert(/*onConflict = OnConflictStrategy.ABORT*/)
+    @Insert
     suspend fun insertAll(vararg chatrooms: ChatRoom): List<Long>
 
     @Query("SELECT * FROM chatroom")

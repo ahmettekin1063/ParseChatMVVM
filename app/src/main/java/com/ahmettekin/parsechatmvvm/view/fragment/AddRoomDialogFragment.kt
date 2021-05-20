@@ -44,4 +44,5 @@ class AddRoomDialogFragment: DialogFragment(), View.OnClickListener {
         }
         dialog?.dismiss()
     }
+
 }

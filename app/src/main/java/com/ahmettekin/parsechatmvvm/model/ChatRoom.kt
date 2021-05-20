@@ -12,15 +12,10 @@ data class ChatRoom(
     val name: String?,
     @ColumnInfo(name = "adminUserId")
     val adminUserId: String?,
-
     @ColumnInfo(name = "userIdList")
     var userIdList: String?,
-    //var userIdList: ArrayList<String>?,
-
     @ColumnInfo(name = "messageIdList")
     var messageIdList: String?
-    //var messageIdList: ArrayList<String>?
-
     ){
     @PrimaryKey(autoGenerate = true)
     var uuid=0

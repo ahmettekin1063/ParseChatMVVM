@@ -14,9 +14,7 @@ import android.os.Build
 import androidx.lifecycle.LiveData
 
 class NetworkConnectionLiveData(val context: Context) : LiveData<Boolean>() {
-
     private var connectivityManager: ConnectivityManager = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
     private lateinit var connectivityManagerCallback: ConnectivityManager.NetworkCallback
 
     override fun onActive() {
@@ -80,4 +78,5 @@ class NetworkConnectionLiveData(val context: Context) : LiveData<Boolean>() {
         val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
         postValue(activeNetwork?.isConnected == true)
     }
+
 }

@@ -37,7 +37,6 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
             val dao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
             val chatRoomList = dao.getAllChatRooms()
             roomList.value = chatRoomList
-            println("sqlite rooms")
         }
     }
 
@@ -48,7 +47,6 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
                 dao.deleteAllChatRooms()
             }
             dao.insertAll(*list.toTypedArray())
-            println("saveRoomsInSQLite")
         }
 
     }
@@ -78,12 +76,6 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
             }
             changeRoomLive()
         }
-    }
-
-    fun unSubscribe(){
-        val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
-        val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
-        parseLiveQueryClient.unsubscribe(parseQuery)
     }
 
     private fun changeRoomLive(){

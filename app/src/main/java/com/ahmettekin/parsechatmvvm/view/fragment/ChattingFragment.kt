@@ -46,10 +46,8 @@ class ChattingFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
         }
         dataBinding.fragment = this
-
         viewModel.setupMessagesFromB4a(currentRoomObjectId)
         viewModel.connectionControl(viewLifecycleOwner)
-
         observeLiveData()
     }
 

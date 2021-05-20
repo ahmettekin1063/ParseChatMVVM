@@ -139,7 +139,6 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                     room.put("userIdList", userIdList)
                     room.saveInBackground {
                         if (it == null) {
-                            println("success")
                             joinControl(currentRoomObjectId)
                         } else {
                             println("error1:" + it.localizedMessage)
@@ -156,7 +155,6 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
         launch {
             val messagesDao = MessagesDatabase(getApplication()).messagesDao()
             val messages = messagesDao.getAllMessages()
-            println("get messages from sqlite")
             val roomsDao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
             val room = roomsDao.getChatroom(currentRoomObjectId)
             val mMessages = arrayListOf<Message>()

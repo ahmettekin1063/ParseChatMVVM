@@ -23,9 +23,7 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
 class MessageService : Service(), CoroutineScope {
-
     private val job = Job()
-
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
@@ -47,8 +45,7 @@ class MessageService : Service(), CoroutineScope {
                     saveMessagesInSQLite(messages)
                     handleMessage()
                 } else {
-                    Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -60,28 +57,20 @@ class MessageService : Service(), CoroutineScope {
             val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
             val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
             parseQuery.orderByAscending("createdAt")
-            val subscriptionHandling: SubscriptionHandling<ParseObject> =
-                parseLiveQueryClient.subscribe(parseQuery)
+            val subscriptionHandling: SubscriptionHandling<ParseObject> = parseLiveQueryClient.subscribe(parseQuery)
             subscriptionHandling.handleEvents { query, _, _ ->
                 val handler = Handler(Looper.getMainLooper())
                 handler.post {
                     query?.findInBackground { messages, e ->
                         if (e == null) {
                             saveMessagesInSQLite(messages)
-                            println(ParseUser.getCurrentUser().objectId)
-                            println(messages.last().getString("userId"))
                             if (!isMyMessage(messages.last().getString("userId"))) {
                                 runBlocking {
                                     sendNotification(messages.last().getString("body"))
                                 }
                             }
                         } else {
-                            Toast.makeText(
-                                applicationContext,
-                                e.localizedMessage,
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
+                            Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -91,7 +80,7 @@ class MessageService : Service(), CoroutineScope {
 
     private fun sendNotification(message: String?) {
         message?.let {
-            val mMessage = if (isApplicationPaused) {
+            val mMessage = if (isApplicationPaused || isApplicationPaused != null ) {
                 message
             } else {
                 ""
@@ -110,8 +99,7 @@ class MessageService : Service(), CoroutineScope {
                 var notificationChannel: NotificationChannel? =
                     notificationManager.getNotificationChannel(channelId)
                 if (notificationChannel == null) {
-                    notificationChannel =
-                        NotificationChannel(channelId, channelName, channelImportance)
+                    notificationChannel = NotificationChannel(channelId, channelName, channelImportance)
                     notificationChannel.description = channelDescription
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -159,7 +147,6 @@ class MessageService : Service(), CoroutineScope {
                 messages.add(message)
             }
             dao.insertAll(*messages.toTypedArray())
-            println("saved messages in sqlite")
         }
     }
 }

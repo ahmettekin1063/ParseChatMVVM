@@ -14,7 +14,6 @@ class RegisterViewModel(application: Application) : BaseViewModel(application) {
 
     fun registerWithEmailAndPassword(email: String?, password: String?,passwordAgain:String?, v:View){
         if (!email.isNullOrEmpty() && !password.isNullOrEmpty() && !passwordAgain.isNullOrEmpty() && email.contains("@")) {
-
             if (password == passwordAgain){
                 registerStatus.value = true
                 newUserAccount(email,password, v)

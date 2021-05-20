@@ -8,7 +8,6 @@ import com.ahmettekin.parsechatmvvm.model.Message
 
 @Dao
 interface MessagesDao {
-
     @Insert
     suspend fun insertAll(vararg messages: Message): List<Long>
 

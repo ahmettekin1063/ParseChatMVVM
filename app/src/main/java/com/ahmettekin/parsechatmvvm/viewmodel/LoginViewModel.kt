@@ -21,16 +21,11 @@ class LoginViewModel(application: Application) : BaseViewModel(application) {
                 ParseUser.logInInBackground(userName, password) { user, e ->
                     if (e != null) {
                         isLogging.value = false
-                        Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                     } else {
                         isLogging.value = false
                         loginStatus.value = true
-                        Toast.makeText(
-                            getApplication(),
-                            "Welcome " + user.username.toString(),
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(getApplication(), "Welcome " + user.username.toString(), Toast.LENGTH_LONG).show()
                     }
                 }
             } else {
