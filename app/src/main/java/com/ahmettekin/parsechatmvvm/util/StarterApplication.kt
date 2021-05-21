@@ -1,9 +1,10 @@
 package com.ahmettekin.parsechatmvvm.util
 
 import android.app.Application
-import android.content.Intent
-import com.ahmettekin.parsechatmvvm.service.MessageService
 import com.parse.Parse
+import com.parse.ParseInstallation
+import com.parse.ParsePush
+
 
 class StarterApplication : Application(){
 
@@ -12,11 +13,16 @@ class StarterApplication : Application(){
         Parse.setLogLevel(Parse.LOG_LEVEL_ERROR)
         Parse.initialize(
             Parse.Configuration.Builder(this)
-            .applicationId("Qf82oHIQpTVLRcerSbQTiNoqYHwE3jXkvFtSZ9yF")
-            .clientKey("h3J6W8FR6p4HsHMIqegOyLorMd0Mo9yiuD0mCrhX")
-            .server("https://parsechatmvvm.b4a.io/")
+            .applicationId(applicationId)
+            .clientKey(clientKey)
+            .server(server)
             .build()
         )
+        val installation = ParseInstallation.getCurrentInstallation()
+        installation.put("GCMSenderId", senderId)
+        installation.saveInBackground()
+        //ParsePush.subscribeInBackground("Giants")
+
     }
 
 }

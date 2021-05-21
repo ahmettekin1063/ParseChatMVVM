@@ -38,7 +38,7 @@ class RoomsFragment : Fragment() , RoomClickListener{
         }
         viewModel.getRoomsFromBack4App()
         viewModel.connectionControl(viewLifecycleOwner)
-        context?.startService(Intent(context, MessageService::class.java))
+        //context?.startService(Intent(context, MessageService::class.java))
         observeLiveData()
     }
 

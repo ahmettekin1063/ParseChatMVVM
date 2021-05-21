@@ -4,7 +4,7 @@ plugins {
     id "androidx.navigation.safeargs.kotlin"
     id 'kotlin-kapt'
 }
-
+apply plugin: 'com.google.gms.google-services'
 android {
     compileSdkVersion 30
 
@@ -79,5 +79,15 @@ dependencies {
     implementation "com.github.parse-community.Parse-SDK-Android:parse:1.24.1"
     implementation 'com.github.parse-community:ParseLiveQuery-Android:1.1.0'
 
+
+    implementation "com.github.parse-community.Parse-SDK-Android:fcm:1.24.1"
+    //implementation 'com.parse.bolts:bolts-android:1.4.0'
+
+    implementation platform('com.google.firebase:firebase-bom:28.0.1')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-analytics'
+
+    //implementation 'com.google.firebase:firebase-core:28.0.1'
+    //implementation 'com.google.firebase:firebase-messaging:28.0.1'
 
 }

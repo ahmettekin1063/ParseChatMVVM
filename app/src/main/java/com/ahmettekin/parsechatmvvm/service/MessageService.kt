@@ -28,50 +28,49 @@ class MessageService : Service(), CoroutineScope {
         get() = job + Dispatchers.Main
 
     override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
+        onCreate()
     }
 
     override fun onCreate() {
-        observeMessage()
+        super.onCreate()
+        getMessages()
     }
 
-    private fun observeMessage() {
-        launch {
-            val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-            query.orderByAscending("createdAt")
-            query.findInBackground { messages, e ->
-                if (e == null) {
-                    saveMessagesInSQLite(messages)
-                    handleMessage()
-                } else {
-                    Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
-                }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
+    private fun getMessages() {
+        val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
+        query.orderByAscending("createdAt")
+        query.findInBackground { messages, e ->
+            if (e == null) {
+                saveMessagesInSQLite(messages)
+                handleMessage()
+            } else {
+                Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
             }
         }
-
     }
 
     private fun handleMessage() {
-        launch {
-            val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
-            val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-            parseQuery.orderByAscending("createdAt")
-            val subscriptionHandling: SubscriptionHandling<ParseObject> = parseLiveQueryClient.subscribe(parseQuery)
-            subscriptionHandling.handleEvents { query, _, _ ->
-                val handler = Handler(Looper.getMainLooper())
-                handler.post {
-                    query?.findInBackground { messages, e ->
-                        if (e == null) {
-                            saveMessagesInSQLite(messages)
-                            if (!isMyMessage(messages.last().getString("userId"))) {
-                                runBlocking {
-                                    sendNotification(messages.last().getString("body"))
-                                }
+        val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
+        val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
+        parseQuery.orderByAscending("createdAt")
+        val subscriptionHandling: SubscriptionHandling<ParseObject> = parseLiveQueryClient.subscribe(parseQuery)
+        subscriptionHandling.handleEvents { query, _, _ ->
+            val handler = Handler(Looper.getMainLooper())
+            handler.post {
+                query?.findInBackground { messages, e ->
+                    if (e == null) {
+                        saveMessagesInSQLite(messages)
+                        if (!isMyMessage(messages.last().getString("userId"))) {
+                            runBlocking {
+                                sendNotification(messages.last().getString("body"))
                             }
-                        } else {
-                            Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
                         }
+                    } else {
+                        Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -80,17 +79,16 @@ class MessageService : Service(), CoroutineScope {
 
     private fun sendNotification(message: String?) {
         message?.let {
-            val mMessage = if (isApplicationPaused || isApplicationPaused != null ) {
-                message
-            } else {
+            val mMessage = if (!isApplicationPaused || isApplicationPaused == null ) {
                 ""
+            } else {
+                message
             }
             val builder: NotificationCompat.Builder
             val notificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val intent = Intent(this, MainActivity::class.java)
-            val pendingIntent =
-                PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            val pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channelId = "kanalId"
                 val channelName = "kanalAd"

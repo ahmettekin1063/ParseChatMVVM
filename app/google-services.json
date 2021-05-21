@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "834658083076",
+    "project_id": "parsechatmvvm",
+    "storage_bucket": "parsechatmvvm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834658083076:android:2fe3f0aa41431fb192f051",
+        "android_client_info": {
+          "package_name": "com.ahmettekin.parsechatmvvm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "834658083076-pmcaook9bj9kg8kf8cfj27585ms5b2vn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpR1RXJa1pywTv3tm9wGxOzGpRNQdN9iA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "834658083076-pmcaook9bj9kg8kf8cfj27585ms5b2vn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,20 +6,23 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
-import androidx.room.Room
 import com.ahmettekin.parsechatmvvm.database.ChatRoomsDatabase
 import com.ahmettekin.parsechatmvvm.database.MessagesDatabase
-import com.ahmettekin.parsechatmvvm.model.ChatRoom
 import com.ahmettekin.parsechatmvvm.model.Message
+import com.ahmettekin.parsechatmvvm.then
 import com.ahmettekin.parsechatmvvm.util.NetworkConnectionLiveData
+import com.parse.ParseInstallation
 import com.parse.ParseObject
+import com.parse.ParsePush
 import com.parse.ParseQuery
 import com.parse.ParseUser
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.json.JSONException
+import org.json.JSONObject
+
 
 class ChattingViewModel(application: Application) : BaseViewModel(application) {
     val messageList = MutableLiveData<List<Message>>()
@@ -44,6 +47,38 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                 } else {
                     Toast.makeText(getApplication(), "Message Sent!", Toast.LENGTH_LONG).show()
                     saveMessageIdToCurrentRoom(message.objectId, currentRoomObjectId)
+                }
+            }
+        }
+    }
+
+    private fun createNotification(title:String, body:String){
+        val data = JSONObject()
+        try {
+            data.put("alert", body)
+            data.put("title", title)
+        } catch (e: JSONException) {
+
+            throw IllegalArgumentException("unexpected parsing error", e)
+        }
+
+        val push = ParsePush()
+        //push.setChannel("News")
+        //push.setData(data)
+
+
+
+        val userQuery = ParseUser.getQuery()
+        userQuery.whereEqualTo("objectId",ParseUser.getCurrentUser().objectId)
+        val pushQuery = ParseInstallation.getQuery()
+        
+
+        push.setQuery(pushQuery)
+        push.setMessage(body)
+        push.sendInBackground {
+            it?.let {
+                it.localizedMessage?.let {
+                    println(it)
                 }
             }
         }
@@ -87,7 +122,7 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                         mMessages.add(message)
                     }
                 }
-                runBlocking {
+                launch(Dispatchers.Main) {
                     messageList.value = mMessages
                 }
             }
@@ -105,9 +140,14 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                 handler.post {
                     query?.findInBackground { messages, e ->
                         if (e == null) {
+                            println(messages.size)
                             getMessagesInCurrentRoomFromB4a(messages, currentRoomObjectId)
                         } else {
-                            Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(getApplication(), (e.localizedMessage != null) then e.localizedMessage ?: "", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        if(ParseUser.getCurrentUser().objectId != messages.last().getString("userId"))  {
+                            createNotification(messages.last().getString("userId") ?: "",messages.last().getString("body") ?: "")
                         }
                     }
                 }

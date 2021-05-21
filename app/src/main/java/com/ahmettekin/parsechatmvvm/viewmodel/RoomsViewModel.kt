@@ -16,10 +16,7 @@ import com.ahmettekin.parsechatmvvm.view.fragment.RoomsFragmentDirections
 import com.parse.*
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class RoomsViewModel(application: Application): BaseViewModel(application) {
     val roomList = MutableLiveData<List<ChatRoom>>()
@@ -43,9 +40,10 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
     private fun saveRoomsInSQLite(list: List<ChatRoom>){
         launch {
             val dao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
-            runBlocking {
+            val deleted = async {
                 dao.deleteAllChatRooms()
             }
+            deleted.await()
             dao.insertAll(*list.toTypedArray())
         }
 
