@@ -5,7 +5,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.Navigation
+import com.ahmettekin.parsechatmvvm.util.senderId
 import com.ahmettekin.parsechatmvvm.view.fragment.LoginFragmentDirections
+import com.parse.ParseInstallation
 import com.parse.ParseUser
 import kotlinx.coroutines.launch
 
@@ -50,6 +52,10 @@ class LoginViewModel(application: Application) : BaseViewModel(application) {
     fun goToRoomFragment(v:View) {
         val action = LoginFragmentDirections.actionLoginFragmentToRoomsFragment()
         Navigation.findNavController(v).navigate(action)
+        val installation = ParseInstallation.getCurrentInstallation()
+        //installation.put("GCMSenderId", senderId)
+        installation.put("user", ParseUser.getCurrentUser())
+        installation.saveInBackground()
     }
 
 }

@@ -1,6 +1,5 @@
 package com.ahmettekin.parsechatmvvm.view.fragment
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -15,7 +14,7 @@ import com.ahmettekin.parsechatmvvm.model.Message
 import com.ahmettekin.parsechatmvvm.viewmodel.ChattingViewModel
 import com.parse.ParseUser
 
-class ChattingFragment : Fragment() {
+class ChattingFragment() : Fragment() {
     private lateinit var viewModel: ChattingViewModel
     private lateinit var dataBinding: FragmentChattingBinding
     private lateinit var mAdapter: ChatAdapter
@@ -36,7 +35,7 @@ class ChattingFragment : Fragment() {
         viewModel = ViewModelProviders.of(this).get(ChattingViewModel::class.java)
         val userId = ParseUser.getCurrentUser().objectId
         mMessages = ArrayList()
-        mAdapter = ChatAdapter(view.context, userId,mMessages)
+        mAdapter = ChatAdapter(activity, userId,mMessages)
         arguments?.let{
             currentRoomObjectId= ChattingFragmentArgs.fromBundle(it).currentRoomObjectId
             currentRoomUserIdList= ChattingFragmentArgs.fromBundle(it).currentRoomUserIdList
@@ -46,8 +45,6 @@ class ChattingFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
         }
         dataBinding.fragment = this
-        viewModel.setupMessagesFromB4a(currentRoomObjectId)
-        viewModel.connectionControl(viewLifecycleOwner)
         observeLiveData()
     }
 
@@ -75,10 +72,8 @@ class ChattingFragment : Fragment() {
     private fun observeLiveData() {
         viewModel.messageList.observe(viewLifecycleOwner,{ messages ->
             messages?.let{
-                (context as Activity).runOnUiThread {
-                    mAdapter.updateMessages(messages)
-                    dataBinding.rvChat.scrollToPosition(messages.size-1)
-                }
+                mAdapter.updateMessages(messages)
+                dataBinding.rvChat.scrollToPosition(messages.size-1)
             }
         })
 
@@ -112,6 +107,14 @@ class ChattingFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.joinControl(currentRoomObjectId)
+        viewModel.connectionControl(viewLifecycleOwner)
+        viewModel.setupMessagesFromB4a(currentRoomObjectId)
+        viewModel.changeRoomLive(currentRoomObjectId)
     }
 
+    override fun onPause() {
+        super.onPause()
+        viewModel.unsubscribe()
+    }
+    
 }

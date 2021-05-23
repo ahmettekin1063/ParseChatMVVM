@@ -8,9 +8,9 @@ import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.Navigation
-import androidx.room.Room
 import com.ahmettekin.parsechatmvvm.database.ChatRoomsDatabase
 import com.ahmettekin.parsechatmvvm.model.ChatRoom
+import com.ahmettekin.parsechatmvvm.then
 import com.ahmettekin.parsechatmvvm.util.NetworkConnectionLiveData
 import com.ahmettekin.parsechatmvvm.view.fragment.RoomsFragmentDirections
 import com.parse.*
@@ -21,6 +21,10 @@ import kotlinx.coroutines.*
 class RoomsViewModel(application: Application): BaseViewModel(application) {
     val roomList = MutableLiveData<List<ChatRoom>>()
     val isConnected = MutableLiveData<Boolean>()
+    private val roomQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
+    private val roomLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
+    private lateinit var subscriptionHandling: SubscriptionHandling<ParseObject>
+    private val dao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
 
     fun connectionControl(viewLifecycleOwner: LifecycleOwner) {
         NetworkConnectionLiveData(getApplication())
@@ -39,22 +43,18 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
 
     private fun saveRoomsInSQLite(list: List<ChatRoom>){
         launch {
-            val dao = ChatRoomsDatabase(getApplication()).chatRoomsDao()
-            val deleted = async {
+            runBlocking {
                 dao.deleteAllChatRooms()
             }
-            deleted.await()
             dao.insertAll(*list.toTypedArray())
         }
-
     }
 
     fun getRoomsFromBack4App(){
         launch {
             val mRoomList = ArrayList<ChatRoom>()
-            val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
-            query.orderByAscending("createdAt")
-            query.findInBackground { rooms, e ->
+            roomQuery.orderByAscending("createdAt")
+            roomQuery.findInBackground { rooms, e ->
                 if (e == null && rooms != null) {
                     for (tempRoom in rooms) {
                         val room = ChatRoom(
@@ -72,16 +72,17 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
                     Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
             }
-            changeRoomLive()
         }
     }
 
-    private fun changeRoomLive(){
+    fun unsubscribe(){
+        roomLiveQueryClient.unsubscribe(roomQuery,subscriptionHandling)
+    }
+
+    fun changeRoomLive(){
         launch {
-            val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
-            val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Rooms")
-            parseQuery.orderByAscending("createdAt")
-            val subscriptionHandling: SubscriptionHandling<ParseObject> = parseLiveQueryClient.subscribe(parseQuery)
+            roomQuery.orderByAscending("createdAt")
+            subscriptionHandling = roomLiveQueryClient.subscribe(roomQuery)
             subscriptionHandling.handleEvents { query, _, _ ->
                 val handler = Handler(Looper.getMainLooper())
                 handler.post {

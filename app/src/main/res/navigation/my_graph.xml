@@ -27,7 +27,9 @@
         tools:layout="@layout/fragment_rooms" >
         <action
             android:id="@+id/action_roomsFragment_to_chattingFragment"
-            app:destination="@id/chattingFragment" />
+            app:destination="@id/chattingFragment"
+            app:launchSingleTop="false"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_roomsFragment_to_loginFragment"
             app:destination="@id/loginFragment"
@@ -52,9 +54,6 @@
             app:launchSingleTop="true"
             app:popUpTo="@id/chattingFragment"
             app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_chattingFragment_to_roomsFragment"
-            app:destination="@id/roomsFragment" />
     </fragment>
     <fragment
         android:id="@+id/registerFragment"

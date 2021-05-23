@@ -1,11 +1,11 @@
 package com.ahmettekin.parsechatmvvm.adapter
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.model.Message
@@ -13,13 +13,15 @@ import com.bumptech.glide.Glide
 import java.math.BigInteger
 import java.security.MessageDigest
 
-class ChatAdapter(private val mContext: Context, private val mUserId: String, private val mMessages: ArrayList<Message>)
+class ChatAdapter(private val mActivity: FragmentActivity?, private val mUserId: String, private val mMessages: ArrayList<Message>)
     : RecyclerView.Adapter<ChatAdapter.MessageViewHolder>() {
 
     fun updateMessages(newMessageList: List<Message>) {
-        mMessages.clear()
-        mMessages.addAll(newMessageList)
-        notifyDataSetChanged()
+        mActivity?.runOnUiThread {
+            mMessages.clear()
+            mMessages.addAll(newMessageList)
+            notifyDataSetChanged()
+        }
     }
 
     override fun getItemCount(): Int {
@@ -73,10 +75,12 @@ class ChatAdapter(private val mContext: Context, private val mUserId: String, pr
 
         override fun bindMessage(message: Message) {
             message.userId?.apply {
-                Glide.with(mContext)
-                    .load(getProfileUrl(this))
-                    .circleCrop()
-                    .into(imageOther)
+                mActivity?.let {
+                    Glide.with(it)
+                        .load(getProfileUrl(this))
+                        .circleCrop()
+                        .into(imageOther)
+                }
                 body.text = message.body
                 name.text = message.userId
             }
@@ -90,10 +94,12 @@ class ChatAdapter(private val mContext: Context, private val mUserId: String, pr
 
         override fun bindMessage(message: Message) {
             message.userId?.apply {
-                Glide.with(mContext)
-                    .load(getProfileUrl(this))
-                    .circleCrop()
-                    .into(imageMe)
+                mActivity?.let {
+                    Glide.with(it.applicationContext)
+                        .load(getProfileUrl(this))
+                        .circleCrop()
+                        .into(imageMe)
+                }
                 body.text = message.body
             }
         }

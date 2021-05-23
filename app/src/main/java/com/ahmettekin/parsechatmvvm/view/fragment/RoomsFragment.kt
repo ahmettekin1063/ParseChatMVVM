@@ -36,10 +36,16 @@ class RoomsFragment : Fragment() , RoomClickListener{
             adapter = roomsAdapter
             layoutManager = LinearLayoutManager(context)
         }
-        viewModel.getRoomsFromBack4App()
-        viewModel.connectionControl(viewLifecycleOwner)
+        //viewModel.getRoomsFromBack4App()
         //context?.startService(Intent(context, MessageService::class.java))
         observeLiveData()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.connectionControl(viewLifecycleOwner)
+        viewModel.getRoomsFromBack4App()
+        viewModel.changeRoomLive()
     }
 
     private fun observeLiveData() {
@@ -81,6 +87,11 @@ class RoomsFragment : Fragment() , RoomClickListener{
     override fun onRoomClicked(currentRoomObjectId: String, currentRoomUserIdList: String) {
         val action = RoomsFragmentDirections.actionRoomsFragmentToChattingFragment(currentRoomObjectId, currentRoomUserIdList)
         Navigation.findNavController(mView).navigate(action)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.unsubscribe()
     }
 
 }
