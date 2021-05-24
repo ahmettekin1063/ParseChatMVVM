@@ -28,19 +28,17 @@ class RegisterViewModel(application: Application) : BaseViewModel(application) {
     }
 
     private fun newUserAccount(email: String, password: String, v:View) {
-        launch {
-            val user = ParseUser()
-            user.username = email.substring(0, email.indexOf("@"))
-            user.setPassword(password)
-            user.email = email
-            user.signUpInBackground {
-                if (it != null) {
-                    registerStatus.value = false
-                    Toast.makeText(getApplication(), it.localizedMessage, Toast.LENGTH_LONG).show()
-                } else {
-                    registerStatus.value = false
-                    goToLoginFragment(v)
-                }
+        val user = ParseUser()
+        user.username = email.substring(0, email.indexOf("@"))
+        user.setPassword(password)
+        user.email = email
+        user.signUpInBackground {
+            if (it != null) {
+                registerStatus.value = false
+                Toast.makeText(getApplication(), it.localizedMessage, Toast.LENGTH_LONG).show()
+            } else {
+                registerStatus.value = false
+                goToLoginFragment(v)
             }
         }
     }

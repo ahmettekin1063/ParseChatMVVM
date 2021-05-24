@@ -49,28 +49,6 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    private fun createNotification(title:String, body:String){
-        val data = JSONObject()
-        try {
-            data.put("alert", body)
-            data.put("title", title)
-        } catch (e: JSONException) {
-            throw IllegalArgumentException("unexpected parsing error", e)
-        }
-        val push = ParsePush()
-        val pushQuery = ParseInstallation.getQuery()
-        pushQuery.whereEqualTo("user",ParseUser.getCurrentUser())
-        push.setQuery(pushQuery)
-        push.setMessage(body)
-        push.sendInBackground {
-            it?.let {
-                it.localizedMessage?.let {
-                    println(it)
-                }
-            }
-        }
-    }
-
     private fun saveMessageIdToCurrentRoom(messageId: String, currentRoomObjectId: String) {
         roomQuery.getInBackground(currentRoomObjectId) { room, e ->
             var tempMessageIds = room.getString("messageIdList")
@@ -100,8 +78,7 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                         mMessages.add(message)
                     }
                 }
-            mMessages.reverse()
-            messageList.value = mMessages
+            mMessages.reverse().also {messageList.value = mMessages}
         }
     }
 
@@ -151,7 +128,9 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                     mMessages.add(tempMessage)
                 }
             }
-            messageList.value = mMessages
+            //mMessages.reverse().also {
+                messageList.value = mMessages
+            //}
         }
     }
 
@@ -178,11 +157,7 @@ class ChattingViewModel(application: Application) : BaseViewModel(application) {
                         mMessages.add(message)
                     }
                 }
-                mMessages.reverse()
-                messageList.value = mMessages
-                if(!mMessages.isNullOrEmpty() && mMessages.last().userId != ParseUser.getCurrentUser().objectId) {
-                    createNotification(mMessages.last().userId ?: "", mMessages.last().body ?: "")
-                }
+                mMessages.reverse().also {messageList.value = mMessages}
             } else {
                 Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
             }

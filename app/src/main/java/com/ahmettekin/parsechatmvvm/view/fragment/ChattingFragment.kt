@@ -14,7 +14,7 @@ import com.ahmettekin.parsechatmvvm.model.Message
 import com.ahmettekin.parsechatmvvm.viewmodel.ChattingViewModel
 import com.parse.ParseUser
 
-class ChattingFragment() : Fragment() {
+class ChattingFragment : Fragment() {
     private lateinit var viewModel: ChattingViewModel
     private lateinit var dataBinding: FragmentChattingBinding
     private lateinit var mAdapter: ChatAdapter

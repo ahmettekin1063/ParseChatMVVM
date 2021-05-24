@@ -14,12 +14,12 @@ import com.ahmettekin.parsechatmvvm.database.MessagesDatabase
 import com.ahmettekin.parsechatmvvm.isApplicationPaused
 import com.ahmettekin.parsechatmvvm.model.Message
 import com.ahmettekin.parsechatmvvm.view.activity.MainActivity
-import com.parse.ParseObject
-import com.parse.ParseQuery
-import com.parse.ParseUser
+import com.parse.*
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
 import kotlinx.coroutines.*
+import org.json.JSONException
+import org.json.JSONObject
 import kotlin.coroutines.CoroutineContext
 
 class MessageService : Service(), CoroutineScope {
@@ -27,9 +27,7 @@ class MessageService : Service(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    override fun onDestroy() {
-        onCreate()
-    }
+    override fun onDestroy() {}
 
     override fun onCreate() {
         super.onCreate()
@@ -42,7 +40,7 @@ class MessageService : Service(), CoroutineScope {
 
     private fun getMessages() {
         val query: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-        query.orderByAscending("createdAt")
+        query.orderByDescending("createdAt")
         query.findInBackground { messages, e ->
             if (e == null) {
                 saveMessagesInSQLite(messages)
@@ -56,7 +54,7 @@ class MessageService : Service(), CoroutineScope {
     private fun handleMessage() {
         val parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient()
         val parseQuery: ParseQuery<ParseObject> = ParseQuery.getQuery("Message")
-        parseQuery.orderByAscending("createdAt")
+        parseQuery.orderByDescending("createdAt")
         val subscriptionHandling: SubscriptionHandling<ParseObject> = parseLiveQueryClient.subscribe(parseQuery)
         subscriptionHandling.handleEvents { query, _, _ ->
             val handler = Handler(Looper.getMainLooper())
@@ -64,10 +62,8 @@ class MessageService : Service(), CoroutineScope {
                 query?.findInBackground { messages, e ->
                     if (e == null) {
                         saveMessagesInSQLite(messages)
-                        if (!isMyMessage(messages.last().getString("userId"))) {
-                            runBlocking {
-                                sendNotification(messages.last().getString("body"))
-                            }
+                        if (!isMyMessage(messages.first().getString("userId"))) {
+                            createNotification(messages.first().getString("userId") ?: "",messages.first().getString("body") ?: "")
                         }
                     } else {
                         Toast.makeText(applicationContext, e.localizedMessage, Toast.LENGTH_SHORT).show()
@@ -85,8 +81,7 @@ class MessageService : Service(), CoroutineScope {
                 message
             }
             val builder: NotificationCompat.Builder
-            val notificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val intent = Intent(this, MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -144,8 +139,28 @@ class MessageService : Service(), CoroutineScope {
                 )
                 messages.add(message)
             }
+            messages.reverse()
             dao.insertAll(*messages.toTypedArray())
         }
     }
+
+    private fun createNotification(title:String, body:String){
+        var message = ""
+        val data = JSONObject()
+        try {
+            if (isApplicationPaused) message = body
+            data.put("alert", message)
+            data.put("title", title)
+        } catch (e: JSONException) {
+            throw IllegalArgumentException("unexpected parsing error", e)
+        }
+        val push = ParsePush()
+        val pushQuery = ParseInstallation.getQuery()
+        pushQuery.whereEqualTo("user",ParseUser.getCurrentUser())
+        push.setQuery(pushQuery)
+        push.setMessage(message)
+        push.sendInBackground()
+    }
+
 }
 

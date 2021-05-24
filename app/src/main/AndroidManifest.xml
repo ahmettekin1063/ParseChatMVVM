@@ -22,6 +22,7 @@
         android:theme="@style/Theme.ParseChatMVVM">
 
         <service android:name=".service.MessageService"/>
+        <service android:name=".service.RoomService"/>
 
         <activity android:name=".view.activity.MainActivity">
             <intent-filter>

@@ -36,8 +36,6 @@ class RoomsFragment : Fragment() , RoomClickListener{
             adapter = roomsAdapter
             layoutManager = LinearLayoutManager(context)
         }
-        //viewModel.getRoomsFromBack4App()
-        //context?.startService(Intent(context, MessageService::class.java))
         observeLiveData()
     }
 

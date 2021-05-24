@@ -21,9 +21,7 @@ class StarterApplication : Application(){
         )
         val installation = ParseInstallation.getCurrentInstallation()
         installation.put("GCMSenderId", senderId)
-        //installation.put("user", ParseUser.getCurrentUser())
         installation.saveInBackground()
-        //ParsePush.subscribeInBackground("Giants")
     }
 
 }

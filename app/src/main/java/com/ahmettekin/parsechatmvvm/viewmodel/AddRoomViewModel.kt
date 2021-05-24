@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 class AddRoomViewModel(application: Application) : BaseViewModel(application) {
 
     fun createRoomInBackground(roomName: String?) {
-        launch {
             roomName?.let {
                 val room = ParseObject("Rooms")
                 room.put("name", it)
@@ -28,7 +27,6 @@ class AddRoomViewModel(application: Application) : BaseViewModel(application) {
                     }
                 }
             }
-        }
     }
 
 }

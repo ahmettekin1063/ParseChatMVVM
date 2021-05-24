@@ -1,6 +1,7 @@
 package com.ahmettekin.parsechatmvvm.viewmodel
 
 import android.app.Application
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -10,6 +11,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.navigation.Navigation
 import com.ahmettekin.parsechatmvvm.database.ChatRoomsDatabase
 import com.ahmettekin.parsechatmvvm.model.ChatRoom
+import com.ahmettekin.parsechatmvvm.service.MessageService
+import com.ahmettekin.parsechatmvvm.service.RoomService
 import com.ahmettekin.parsechatmvvm.then
 import com.ahmettekin.parsechatmvvm.util.NetworkConnectionLiveData
 import com.ahmettekin.parsechatmvvm.view.fragment.RoomsFragmentDirections
@@ -41,38 +44,27 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
         }
     }
 
-    private fun saveRoomsInSQLite(list: List<ChatRoom>){
-        launch {
-            runBlocking {
-                dao.deleteAllChatRooms()
-            }
-            dao.insertAll(*list.toTypedArray())
-        }
-    }
-
     fun getRoomsFromBack4App(){
-        launch {
-            val mRoomList = ArrayList<ChatRoom>()
-            roomQuery.orderByAscending("createdAt")
-            roomQuery.findInBackground { rooms, e ->
-                if (e == null && rooms != null) {
-                    for (tempRoom in rooms) {
-                        val room = ChatRoom(
-                            tempRoom.objectId,
-                            tempRoom.getString("name"),
-                            tempRoom.getString("adminUserId"),
-                            tempRoom.getString("userIdList"),
-                            tempRoom.getString("messageIdList")
-                        )
-                        mRoomList.add(room)
-                    }
-                    roomList.value = mRoomList
-                    saveRoomsInSQLite(mRoomList)
-                } else {
-                    Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
+        val mRoomList = ArrayList<ChatRoom>()
+        roomQuery.orderByAscending("createdAt")
+        roomQuery.findInBackground { rooms, e ->
+            if (e == null && rooms != null) {
+                for (tempRoom in rooms) {
+                    val room = ChatRoom(
+                        tempRoom.objectId,
+                        tempRoom.getString("name"),
+                        tempRoom.getString("adminUserId"),
+                        tempRoom.getString("userIdList"),
+                        tempRoom.getString("messageIdList")
+                    )
+                    mRoomList.add(room)
                 }
+                roomList.value = mRoomList
+            } else {
+                Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
             }
         }
+
     }
 
     fun unsubscribe(){
@@ -80,32 +72,29 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
     }
 
     fun changeRoomLive(){
-        launch {
-            roomQuery.orderByAscending("createdAt")
-            subscriptionHandling = roomLiveQueryClient.subscribe(roomQuery)
-            subscriptionHandling.handleEvents { query, _, _ ->
-                val handler = Handler(Looper.getMainLooper())
-                handler.post {
-                    query?.findInBackground { rooms, e ->
-                        if (e == null) {
-                            rooms?.let {
-                                val mRoomList = ArrayList<ChatRoom>()
-                                for (tempRoom in it) {
-                                    val room = ChatRoom(
-                                        tempRoom.objectId,
-                                        tempRoom.getString("name"),
-                                        tempRoom.getString("adminUserId"),
-                                        tempRoom.getString("userIdList"),
-                                        tempRoom.getString("messageIdList")
-                                    )
-                                    mRoomList.add(room)
-                                }
-                                roomList.value = mRoomList
-                                saveRoomsInSQLite(mRoomList)
+        roomQuery.orderByAscending("createdAt")
+        subscriptionHandling = roomLiveQueryClient.subscribe(roomQuery)
+        subscriptionHandling.handleEvents { query, _, _ ->
+            val handler = Handler(Looper.getMainLooper())
+            handler.post {
+                query?.findInBackground { rooms, e ->
+                    if (e == null) {
+                        rooms?.let {
+                            val mRoomList = ArrayList<ChatRoom>()
+                            for (tempRoom in it) {
+                                val room = ChatRoom(
+                                    tempRoom.objectId,
+                                    tempRoom.getString("name"),
+                                    tempRoom.getString("adminUserId"),
+                                    tempRoom.getString("userIdList"),
+                                    tempRoom.getString("messageIdList")
+                                )
+                                mRoomList.add(room)
                             }
-                        } else {
-                            Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
+                            roomList.value = mRoomList
                         }
+                    } else {
+                        Toast.makeText(getApplication(), e.localizedMessage, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -116,6 +105,8 @@ class RoomsViewModel(application: Application): BaseViewModel(application) {
         ParseUser.logOut()
         val action = RoomsFragmentDirections.actionRoomsFragmentToLoginFragment()
         Navigation.findNavController(v).navigate(action)
+        v.context.stopService(Intent(v.context, MessageService::class.java))
+        v.context.stopService(Intent(v.context, RoomService::class.java))
     }
 
 }

@@ -1,5 +1,6 @@
 package com.ahmettekin.parsechatmvvm.view.fragment
 
+import android.content.Intent
 import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -9,6 +10,8 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import com.ahmettekin.parsechatmvvm.R
 import com.ahmettekin.parsechatmvvm.databinding.FragmentLoginBinding
+import com.ahmettekin.parsechatmvvm.service.MessageService
+import com.ahmettekin.parsechatmvvm.service.RoomService
 import com.ahmettekin.parsechatmvvm.then
 import com.ahmettekin.parsechatmvvm.viewmodel.LoginViewModel
 
@@ -49,6 +52,8 @@ class LoginFragment : Fragment() {
             loginControl?.let {
                 if (it){
                     viewModel.goToRoomFragment(mView)
+                    context?.startService(Intent(context, MessageService::class.java))
+                    context?.startService(Intent(context, RoomService::class.java))
                 }
             }
         })
